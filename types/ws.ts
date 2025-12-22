@@ -1,0 +1,19 @@
+export enum WsMessageType {
+  JOIN_QUEUE = "JOIN_QUEUE",
+  MATCH_FOUND = "MATCH_FOUND",
+  CHAT_MESSAGE = "CHAT_MESSAGE",
+
+  PEER_RECONNECTING = "PEER_RECONNECTING",
+  PEER_RECONNECTED = "PEER_RECONNECTED",
+  PEER_DISCONNECTED = "PEER_DISCONNECTED",
+  FIND_ANOTHER_MATCH = "FIND_ANOTHER_MATCH",
+  END_CONVERSATION = "END_CONVERSATION",
+  END_CHAT = "END_CHAT"
+
+  }
+  
+  export interface ChatPayload {
+    message: string;
+    from :string;
+  }
+  
