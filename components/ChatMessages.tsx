@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 interface Message {
   text: string;
   from: string;
@@ -18,22 +20,29 @@ export default function ChatMessages({
   matched,
   peerDisconnected
 }: ChatMessagesProps) {
-  return (
-    <div className="flex-1 overflow-y-auto space-y-2 mb-3">
-      {messages.map((m, i) => {
-        // 🟡 SYSTEM MESSAGE
-        if (m.from === "system") {
-          return (
-            <div
-              key={i}
-              className="text-center text-xs text-gray-400 py-1"
-            >
-              {m.text}
-            </div>
-          );
-        }
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-        // 🟢 USER MESSAGE
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+
+    if (isNearBottom) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  return (
+<div
+  ref={containerRef}
+  className="h-full overflow-y-auto space-y-2 chat-scroll"
+>
+
+      {messages.map((m, i) => {
         const isMine = m.from === myUserId;
 
         return (
@@ -42,11 +51,13 @@ export default function ChatMessages({
             className={`flex ${isMine ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`px-3 py-2 rounded-lg max-w-[75%] text-sm ${
-                isMine
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-700 text-gray-200"
-              }`}
+              className={`px-3 py-2 rounded-lg max-w-[75%] text-sm
+                          whitespace-pre-wrap break-words
+                          ${
+                            isMine
+                              ? "bg-indigo-600 text-white"
+                              : "bg-gray-700 text-gray-200"
+                          }`}
             >
               {m.text}
             </div>
@@ -55,10 +66,13 @@ export default function ChatMessages({
       })}
 
       {!matched && !peerDisconnected && (
-        <div className="text-center text-gray-500 text-sm mt-6">
+        <div className="text-center text-gray-500 text-sm mt-10">
           Waiting for a match…
         </div>
       )}
+
+      {/* Scroll anchor */}
+      <div ref={bottomRef} />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { getUserName } from "./userProfile";
 let socket: WebSocket | null = null;
 
 const WS_BASE_URL =
-  process.env.NEXT_PUBLIC_WS_URL || "ws://192.168.1.20:3000";
+  process.env.NEXT_PUBLIC_WS_URL || "wss://lazyspace-back-1.onrender.com";
 
 export function connectSocket(
   onMessage: (data: any) => void
