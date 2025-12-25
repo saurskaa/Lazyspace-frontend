@@ -2,6 +2,7 @@
 
 import { WsMessageType } from "@/types/ws";
 import { sendMessage } from "@/lib/socket";
+import { useRef } from "react";
 
 interface ChatInputProps {
   value: string;
@@ -11,11 +12,15 @@ interface ChatInputProps {
 
 const MAX_HEIGHT = 120;
 
+
 export default function ChatInput({
   value,
   onChange,
   disabled
 }: ChatInputProps) {
+  const typingTimeout = useRef<NodeJS.Timeout | null>(null);
+const hasSentTyping = useRef(false);
+
   const isTouchDevice =
     typeof window !== "undefined" &&
     window.matchMedia("(pointer: coarse)").matches;
@@ -27,6 +32,9 @@ export default function ChatInput({
       type: WsMessageType.CHAT_MESSAGE,
       payload: { message: value }
     });
+
+    sendMessage({ type: WsMessageType.TYPING_STOP });
+    hasSentTyping.current = false;
 
     onChange("");
   };
@@ -50,6 +58,23 @@ export default function ChatInput({
           e.target.style.height = "auto";
           e.target.style.height =
             Math.min(e.target.scrollHeight, MAX_HEIGHT) + "px";
+
+
+          // Send TYPING_START only once
+          if (!hasSentTyping.current && value.trim()) {
+            sendMessage({ type: WsMessageType.TYPING_START });
+            hasSentTyping.current = true;
+          }
+
+          // Reset stop-typing timer
+          if (typingTimeout.current) {
+            clearTimeout(typingTimeout.current);
+          }
+
+          typingTimeout.current = setTimeout(() => {
+            sendMessage({ type: WsMessageType.TYPING_STOP });
+            hasSentTyping.current = false;
+          }, 1500);
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {

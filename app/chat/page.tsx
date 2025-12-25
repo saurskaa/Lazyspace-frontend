@@ -22,10 +22,13 @@ export default function Home() {
   const [text, setText] = useState("");
   const userName = getUserName() ?? "Someone";
   const [partnerName, setPartnerName] = useState<string | null>(null);
+  const [partnerTyping, setPartnerTyping] = useState(false);
+  const [connectionState, setConnectionState] =
+    useState<"connected" | "reconnecting" | "disconnected">("connected");
 
   const myUserId = getOrCreateUserId();
 
-  
+
   useEffect(() => {
     connectSocket((msg) => {
       switch (msg.type) {
@@ -35,13 +38,23 @@ export default function Home() {
           break;
 
         case WsMessageType.CHAT_MESSAGE:
+          setPartnerTyping(false);
           setMessages((prev) => [
             ...prev,
             { text: msg.payload.message, from: msg.payload.from }
           ]);
           break;
 
+        case WsMessageType.TYPING_START:
+          setPartnerTyping(true);
+          break;
+
+        case WsMessageType.TYPING_STOP:
+          setPartnerTyping(false);
+          break;
+
         case WsMessageType.PEER_DISCONNECTED:
+          setPartnerTyping(false);
           setMatched(false);
           setPartnerName("Someone");
           setPeerDisconnected(true);
@@ -51,7 +64,11 @@ export default function Home() {
           ]);
           break;
       }
-    });
+    },
+      (status) => {
+        setConnectionState(status);
+      }
+    );
   }, []);
 
   return (
@@ -61,7 +78,7 @@ export default function Home() {
         {/* Header (fixed) */}
         <div className="shrink-0 border-b border-gray-800 px-4 py-3">
           <ChatHeader
-            userName= {userName}
+            userName={userName}
             partnerName={partnerName ? partnerName : "someone"}
             matched={matched}
             peerDisconnected={peerDisconnected}
@@ -94,6 +111,25 @@ export default function Home() {
 
         {/* Input (fixed bottom) */}
         <div className="shrink-0 border-t border-gray-800 px-3 py-2">
+          {connectionState === "reconnecting" && (
+            <div className="px-3 py-1 text-xs text-yellow-400">
+              Reconnecting…
+            </div>
+          )}
+
+          {connectionState === "disconnected" && (
+            <div className="px-3 py-1 text-xs text-red-400">
+              Connection lost. Please refresh.
+            </div>
+          )}
+
+
+          {partnerTyping && matched && (
+            <div className="px-3 py-1 text-xs text-gray-400">
+              Typing…
+            </div>
+          )}
+
           <ChatInput
             value={text}
             onChange={setText}
