@@ -9,8 +9,8 @@ const pendingMessages: any[] = [];
 
 
 const WS_BASE_URL =
-  // process.env.NEXT_PUBLIC_WS_URL || AppConst.NEXT_PUBLIC_WS_URL;
-  process.env.NEXT_PUBLIC_WS_URL || "ws://192.168.1.3:3000";
+  process.env.NEXT_PUBLIC_WS_URL || AppConst.NEXT_PUBLIC_WS_URL;
+  // process.env.NEXT_PUBLIC_WS_URL || "ws://192.168.1.3:3000";
 
 let reconnectAttempts = 0;
 let reconnectTimer: NodeJS.Timeout | null = null;
