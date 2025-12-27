@@ -10,6 +10,7 @@ import ChatHeader from "@/components/ChatHeader";
 import ChatInput from "@/components/ChatInput";
 import { getUserName } from "@/lib/userProfile";
 import ConversationStatusBanner, { ConversationStatus } from "@/components/ConversationStatusBanner";
+import { match } from "assert";
 interface Message {
   text: string;
   from: string;
@@ -234,7 +235,7 @@ function markChatEnded() {
           <ChatInput
             value={text}
             onChange={setText}
-           disabled={conversationStatus !== "active"}
+           disabled={conversationStatus !== "active" && matched}
           />
         </div>
 
