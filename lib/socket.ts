@@ -5,10 +5,12 @@ import { AppConst } from "@/constants/AppConstants";
 
 
 let socket: WebSocket | null = null;
+const pendingMessages: any[] = [];
+
 
 const WS_BASE_URL =
-  process.env.NEXT_PUBLIC_WS_URL || AppConst.NEXT_PUBLIC_WS_URL;
-  // process.env.NEXT_PUBLIC_WS_URL || "ws://192.168.1.3:3000";
+  // process.env.NEXT_PUBLIC_WS_URL || AppConst.NEXT_PUBLIC_WS_URL;
+  process.env.NEXT_PUBLIC_WS_URL || "ws://192.168.1.3:3000";
 
 let reconnectAttempts = 0;
 let reconnectTimer: NodeJS.Timeout | null = null;
@@ -45,10 +47,15 @@ function connect(){
     console.log("✅ WebSocket connected");
     console.log(`${WS_BASE_URL}?userId=${userId}&name=${encodeURIComponent(name!)}`);
 
-    socket?.send(JSON.stringify({
-      type: WsMessageType.JOIN_QUEUE
-    }));
+
+    while (pendingMessages.length > 0) {
+      const msg = pendingMessages.shift();
+      console.log(`pending messages : ${pendingMessages}`);
+      socket!.send(JSON.stringify(msg));
+    }
   };
+
+ 
 
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -66,9 +73,16 @@ function connect(){
 }
 
 export function sendMessage(message: any) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) return;
-    socket.send(JSON.stringify(message));
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    // Socket not ready → queue the message
+    pendingMessages.push(message);
+    console.log(`pending messages in send : ${pendingMessages}`);
+    return;
   }
+
+  socket.send(JSON.stringify(message));
+}
+
 
 
   function attemptReconnect() {
@@ -88,6 +102,7 @@ export function sendMessage(message: any) {
   }
 
   export function closeSocket() {
+    pendingMessages.length = 0;
     reconnectTimer && clearTimeout(reconnectTimer);
     socket?.close();
     socket = null;

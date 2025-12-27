@@ -61,7 +61,7 @@ const hasSentTyping = useRef(false);
 
 
           // Send TYPING_START only once
-          if (!hasSentTyping.current && value.trim()) {
+          if (!hasSentTyping.current && e.target.value.trim()) {
             sendMessage({ type: WsMessageType.TYPING_START });
             hasSentTyping.current = true;
           }
