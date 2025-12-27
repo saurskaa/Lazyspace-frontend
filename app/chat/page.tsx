@@ -235,7 +235,7 @@ function markChatEnded() {
           <ChatInput
             value={text}
             onChange={setText}
-           disabled={conversationStatus !== "active" && matched}
+           disabled={conversationStatus !== "active" && !matched}
           />
         </div>
 
