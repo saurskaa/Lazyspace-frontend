@@ -10,11 +10,8 @@ import ChatHeader from "@/components/ChatHeader";
 import ChatInput from "@/components/ChatInput";
 import { getUserName } from "@/lib/userProfile";
 import ConversationStatusBanner, { ConversationStatus } from "@/components/ConversationStatusBanner";
-import { match } from "assert";
-interface Message {
-  text: string;
-  from: string;
-}
+import { Message } from "@/Indentities/MessageInterface";
+import { ReplyPreview } from "@/components/ReplyPreview";
 
 export default function Home() {
   const [matched, setMatched] = useState(false);
@@ -28,20 +25,21 @@ export default function Home() {
   const [connectionState, setConnectionState] =
     useState<"connected" | "reconnecting" | "disconnected">("connected");
 
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
-  
+
   const [conversationStatus, setConversationStatus] =
     useState<ConversationStatus>("active");
-  
+
   const [conversationId, setConversationId] = useState<string | null>(null);
 
   const myUserId = getOrCreateUserId();
 
-function markChatEnded() {
-  if (conversationId) {
+  function markChatEnded() {
+    if (conversationId) {
+      localStorage.removeItem(`lazyspace_chat_${conversationId}`);
+    }
     localStorage.removeItem(`lazyspace_chat_${conversationId}`);
-  }
-  localStorage.removeItem(`lazyspace_chat_${conversationId}`);
     setMatched(false);
     setChatEnded(true);
   }
@@ -50,7 +48,7 @@ function markChatEnded() {
     if (conversationId) {
       localStorage.removeItem(`lazyspace_chat_${conversationId}`);
     }
-  
+
     setConversationId(null);
     setMessages([]);
     setChatEnded(false);
@@ -67,7 +65,7 @@ function markChatEnded() {
           setMatched(true);
           setChatEnded(false);
           setPeerDisconnected(false);
-        
+
           setPartnerName(msg.payload.partnerName);
           setConversationId(msg.payload.conversationId);
           break;
@@ -83,7 +81,13 @@ function markChatEnded() {
           setPartnerTyping(false);
           setMessages((prev) => [
             ...prev,
-            { text: msg.payload.message, from: msg.payload.from }
+            {
+              id: msg.payload.id,
+              text: msg.payload.message,
+              from: msg.payload.from,
+              replyTo: msg.payload.replyTo,
+              createdAt: msg.payload.createdAt
+            }
           ]);
           break;
 
@@ -107,7 +111,7 @@ function markChatEnded() {
 
           break;
 
-        case WsMessageType.INVALID_CONVERSATION_ID :
+        case WsMessageType.INVALID_CONVERSATION_ID:
           sendMessage({ type: WsMessageType.JOIN_QUEUE });
           break;
 
@@ -115,11 +119,11 @@ function markChatEnded() {
           setPartnerTyping(false);
           setMatched(false);
           setPartnerName("Someone");
-          setPeerDisconnected(true); 
+          setPeerDisconnected(true);
           setConversationStatus("peer-disconnected");
           markChatEnded();
 
- 
+
           break;
       }
     },
@@ -131,11 +135,11 @@ function markChatEnded() {
 
   useEffect(() => {
     if (!conversationId) return;
-  
+
     const saved = localStorage.getItem(
       `lazyspace_chat_${conversationId}`
     );
-  console.log(`id : ${conversationId}`)
+    console.log(`id : ${conversationId}`)
     if (saved) {
       setMessages(JSON.parse(saved));
     }
@@ -144,7 +148,7 @@ function markChatEnded() {
 
   useEffect(() => {
     if (!conversationId) return;
-  
+
     localStorage.setItem(
       `lazyspace_chat_${conversationId}`,
       JSON.stringify(messages)
@@ -155,13 +159,15 @@ function markChatEnded() {
     console.log(`convo id ${conversationId}`);
     if (!conversationId) {
       sendMessage({ type: WsMessageType.JOIN_QUEUE });
-    }else{
+    } else {
       sendMessage(
-        { type: WsMessageType.REQUEST_RESUME , 
-          payload : {
-            conversationId :conversationId}
+        {
+          type: WsMessageType.REQUEST_RESUME,
+          payload: {
+            conversationId: conversationId
+          }
         }
-      
+
       );
     }
   }, []);
@@ -182,7 +188,7 @@ function markChatEnded() {
               setPeerDisconnected(true);
               markChatEnded();
               setConversationStatus("chat-ended");
-              
+
             }}
             onFindAnotherMatch={() => {
               sendMessage({ type: WsMessageType.FIND_ANOTHER_MATCH });
@@ -195,9 +201,9 @@ function markChatEnded() {
 
 
         <ConversationStatusBanner
-  status={conversationStatus}
-  partnerName={partnerName}
-/>
+          status={conversationStatus}
+          partnerName={partnerName}
+        />
         {/* Messages (ONLY scrollable area) */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
 
@@ -208,11 +214,20 @@ function markChatEnded() {
             myUserId={myUserId}
             matched={matched}
             peerDisconnected={peerDisconnected}
+            onReply={setReplyingTo}
           />
         </div>
 
         {/* Input (fixed bottom) */}
         <div className="shrink-0 border-t border-gray-800 px-3 py-2">
+
+          {replyingTo && (
+            <ReplyPreview
+              message={replyingTo}
+              onCancel={() => setReplyingTo(null)}
+            />
+          )}
+
           {connectionState === "reconnecting" && (
             <div className="px-3 py-1 text-xs text-yellow-400">
               Reconnecting…
@@ -233,9 +248,11 @@ function markChatEnded() {
           )}
 
           <ChatInput
+          replyTo={replyingTo}
             value={text}
             onChange={setText}
-           disabled={conversationStatus !== "active" || !matched}
+            onCancelReply = {() => setReplyingTo(null)}
+            disabled={conversationStatus !== "active" || !matched}
           />
         </div>
 

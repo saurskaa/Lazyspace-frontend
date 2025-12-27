@@ -3,10 +3,12 @@
 import { WsMessageType } from "@/types/ws";
 import { sendMessage } from "@/lib/socket";
 import { useRef } from "react";
-
+import { Message } from "@/Indentities/MessageInterface";
 interface ChatInputProps {
   value: string;
   onChange: (v: string) => void;
+  onCancelReply : (() => void);
+  replyTo : Message | null;
   disabled: boolean;
 }
 
@@ -16,7 +18,9 @@ const MAX_HEIGHT = 120;
 export default function ChatInput({
   value,
   onChange,
-  disabled
+  disabled, 
+  onCancelReply, 
+  replyTo
 }: ChatInputProps) {
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 const hasSentTyping = useRef(false);
@@ -30,13 +34,24 @@ const hasSentTyping = useRef(false);
 
     sendMessage({
       type: WsMessageType.CHAT_MESSAGE,
-      payload: { message: value }
+      payload: { 
+        message: value,
+        replyTo: replyTo
+      ? {
+          id: replyTo.id,
+          text: replyTo.text,
+          from: replyTo.from
+        }
+      : null
+  
+    }
     });
 
     sendMessage({ type: WsMessageType.TYPING_STOP });
     hasSentTyping.current = false;
 
     onChange("");
+    onCancelReply();
   };
 
   return (
