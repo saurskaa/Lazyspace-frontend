@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AppConst } from "@/constants/AppConstants";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,9 +23,11 @@ export const metadata: Metadata = {
     "random chat",
     "online chat",
     "LazySpace",
-    "omeggle"
+    "omegle alternative",
+    "no login chat",
+    "chat with strangers"
   ],
-  metadataBase: new URL("https://lazyspace-frontend.vercel.app/"),
+  metadataBase: new URL(AppConst.NEXT_PUBLIC_FRONTEND_URL),
 };
 
 export default function RootLayout({

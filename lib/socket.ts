@@ -9,8 +9,8 @@ const pendingMessages: any[] = [];
 
 
 const WS_BASE_URL =
-  process.env.NEXT_PUBLIC_WS_URL || AppConst.NEXT_PUBLIC_WS_URL;
-  // process.env.NEXT_PUBLIC_WS_URL || "ws://192.168.1.3:3000";
+  // process.env.NEXT_PUBLIC_WS_URL || AppConst.NEXT_PUBLIC_WS_URL;
+  process.env.NEXT_PUBLIC_WS_URL || "ws://10.105.152.199:3000";
 
 let reconnectAttempts = 0;
 let reconnectTimer: NodeJS.Timeout | null = null;
@@ -21,7 +21,7 @@ let statusHandler: ((status: "connected" | "reconnecting" | "disconnected") => v
 
 export function connectSocket(
   onMessage: (data: any) => void,
-  onStatusChange?: (status: "connected" | "reconnecting" | "disconnected") => void 
+  onStatusChange?: (status: "connected" | "reconnecting" | "disconnected") => void
 ) {
   messageHandler = onMessage;
   statusHandler = onStatusChange;
@@ -30,7 +30,7 @@ export function connectSocket(
 }
 
 
-function connect(){
+function connect() {
   const userId = getOrCreateUserId();
   const name = getUserName();
 
@@ -40,9 +40,9 @@ function connect(){
 
   socket.onopen = () => {
 
-  reconnectAttempts = 0;
+    reconnectAttempts = 0;
 
-  statusHandler?.("connected");
+    statusHandler?.("connected");
 
     console.log("✅ WebSocket connected");
     console.log(`${WS_BASE_URL}?userId=${userId}&name=${encodeURIComponent(name!)}`);
@@ -55,7 +55,7 @@ function connect(){
     }
   };
 
- 
+
 
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -85,25 +85,25 @@ export function sendMessage(message: any) {
 
 
 
-  function attemptReconnect() {
-    if (reconnectAttempts >= AppConst.MAX_RETRIES) {
-      statusHandler?.("disconnected");
-      return;
-    }
-  
-    reconnectAttempts++;
-    statusHandler?.("reconnecting");
-  
-    const delay = AppConst.BASE_DELAY * reconnectAttempts;
-  
-    reconnectTimer = setTimeout(() => {
-      connect();
-    }, delay);
+function attemptReconnect() {
+  if (reconnectAttempts >= AppConst.MAX_RETRIES) {
+    statusHandler?.("disconnected");
+    return;
   }
 
-  export function closeSocket() {
-    pendingMessages.length = 0;
-    reconnectTimer && clearTimeout(reconnectTimer);
-    socket?.close();
-    socket = null;
-  }
+  reconnectAttempts++;
+  statusHandler?.("reconnecting");
+
+  const delay = AppConst.BASE_DELAY * reconnectAttempts;
+
+  reconnectTimer = setTimeout(() => {
+    connect();
+  }, delay);
+}
+
+export function closeSocket() {
+  pendingMessages.length = 0;
+  reconnectTimer && clearTimeout(reconnectTimer);
+  socket?.close();
+  socket = null;
+}

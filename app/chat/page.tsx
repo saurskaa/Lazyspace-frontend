@@ -14,7 +14,18 @@ import { Message } from "@/Indentities/MessageInterface";
 import { ReplyPreview } from "@/components/ReplyPreview";
 
 export default function Home() {
+
+  const params =
+  typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search)
+    : null;
+
+const mode = params?.get("mode");       // "private" | null
+const invite = params?.get("invite");   // string | null
+
+
   const [matched, setMatched] = useState(false);
+  const[inviteLink, setInviteLink] = useState<string|null>(null);
   const [peerDisconnected, setPeerDisconnected] = useState(false);
   const [chatEnded, setChatEnded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -77,6 +88,12 @@ export default function Home() {
           setPartnerName(msg.payload.partnerName);
           setConversationId(msg.payload.conversationId);
           break;
+          case WsMessageType.PRIVATE_LINK_CREATED:
+            setInviteLink(msg.payload.inviteLink);
+            setConversationId(msg.payload.conversationId);
+            break;
+  
+          
         case WsMessageType.CHAT_MESSAGE:
           setPartnerTyping(false);
           setMessages((prev) => [
@@ -131,6 +148,7 @@ export default function Home() {
         setConnectionState(status);
       }
     );
+
   }, []);
 
   useEffect(() => {

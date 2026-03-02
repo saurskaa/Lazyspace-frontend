@@ -1,6 +1,7 @@
 "use client";
 
 import ChatEndAction from "@/components/ChatEndAction";
+import Link from "next/link";
 
 interface ChatHeaderProps {
   userName : string;
@@ -23,9 +24,11 @@ export default function ChatHeader({
     <div className="relative mb-4">
       {/* Centered title block */}
       <div className="text-center">
-        <h1 className="text-xl font-semibold text-indigo-400">
-          LazySpace
-        </h1>
+      <Link href="/">
+  <h1 className="text-xl font-semibold text-indigo-400 cursor-pointer hover:opacity-80 transition-opacity">
+    LazySpace
+  </h1>
+</Link>
         <p className="text-sm text-gray-400">
           {matched && `Hi ${userName}, you are connected with ${partnerName}`}
           {!matched && peerDisconnected && "Chat ended"}
