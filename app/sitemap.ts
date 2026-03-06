@@ -1,4 +1,3 @@
-// app/sitemap.ts
 import { MetadataRoute } from "next";
 import { AppConst } from "@/constants/AppConstants";
 
@@ -16,6 +15,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
             url: `${baseUrl}/chat`,
             lastModified: new Date(),
             changeFrequency: "weekly",
+            priority: 0.9,
+        },
+        {
+            url: `${baseUrl}/how-it-works`,
+            lastModified: new Date(),
+            changeFrequency: "monthly",
+            priority: 0.7,
+        },
+        {
+            url: `${baseUrl}/omegle-alternative`,
+            lastModified: new Date(),
+            changeFrequency: "monthly",
             priority: 0.8,
         },
     ];
