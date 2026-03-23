@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { connectSocket, sendMessage } from "@/lib/socket";
 import { useRouter } from "next/navigation";
 import { WsMessageType } from "@/types/ws";
@@ -16,16 +16,16 @@ import { ReplyPreview } from "@/components/ReplyPreview";
 export default function Home() {
 
   const params =
-  typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search)
-    : null;
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
 
-const mode = params?.get("mode");       // "private" | null
-const invite = params?.get("invite");   // string | null
+  const mode = params?.get("mode");       // "private" | null
+  const invite = params?.get("invite");   // string | null
 
 
   const [matched, setMatched] = useState(false);
-  const[inviteLink, setInviteLink] = useState<string|null>(null);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [peerDisconnected, setPeerDisconnected] = useState(false);
   const [chatEnded, setChatEnded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -43,21 +43,25 @@ const invite = params?.get("invite");   // string | null
     useState<ConversationStatus>("active");
 
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const conversationIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
 
   const myUserId = getOrCreateUserId();
 
   function markChatEnded() {
-    if (conversationId) {
-      localStorage.removeItem(`lazyspace_chat_${conversationId}`);
+    if (conversationIdRef.current) {
+      localStorage.removeItem(`lazyspace_chat_${conversationIdRef.current}`);
     }
-    localStorage.removeItem(`lazyspace_chat_${conversationId}`);
     setMatched(false);
     setChatEnded(true);
   }
 
   function clearConversationCompletely() {
-    if (conversationId) {
-      localStorage.removeItem(`lazyspace_chat_${conversationId}`);
+    if (conversationIdRef.current) {
+      localStorage.removeItem(`lazyspace_chat_${conversationIdRef.current}`);
     }
 
     setConversationId(null);
@@ -71,6 +75,7 @@ const invite = params?.get("invite");   // string | null
       switch (msg.type) {
         case WsMessageType.MATCH_FOUND:
           setConversationStatus("active");
+          localStorage.removeItem(`lazyspace_chat_${msg.payload.conversationId}`);
           clearConversationCompletely();
 
           setMatched(true);
@@ -88,12 +93,12 @@ const invite = params?.get("invite");   // string | null
           setPartnerName(msg.payload.partnerName);
           setConversationId(msg.payload.conversationId);
           break;
-          case WsMessageType.PRIVATE_LINK_CREATED:
-            setInviteLink(msg.payload.inviteLink);
-            setConversationId(msg.payload.conversationId);
-            break;
-  
-          
+        case WsMessageType.PRIVATE_LINK_CREATED:
+          setInviteLink(msg.payload.inviteLink);
+          setConversationId(msg.payload.conversationId);
+          break;
+
+
         case WsMessageType.CHAT_MESSAGE:
           setPartnerTyping(false);
           setMessages((prev) => [
@@ -266,10 +271,10 @@ const invite = params?.get("invite");   // string | null
           )}
 
           <ChatInput
-          replyTo={replyingTo}
+            replyTo={replyingTo}
             value={text}
             onChange={setText}
-            onCancelReply = {() => setReplyingTo(null)}
+            onCancelReply={() => setReplyingTo(null)}
             disabled={conversationStatus !== "active" || !matched}
           />
         </div>
